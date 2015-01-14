@@ -30,6 +30,10 @@
 #include <linux/platform_device.h>
 #include <linux/of.h>
 #include <trace/events/power.h>
+#include <mach/msm_bus.h>
+#ifdef CONFIG_HAS_EARLYSUSPEND
+#include <linux/earlysuspend.h>
+#endif
 
 static DEFINE_MUTEX(l2bw_lock);
 
