@@ -193,13 +193,6 @@ config CPU_FREQ_DEFAULT_GOV_BIOSHOCK
 	help
 	  Default governor of BioShock kernel
 
-config CPU_FREQ_DEFAULT_GOV_SMARTASS2
-  	bool "smartassV2"
-  	select CPU_FREQ_GOV_SMARTASS2
-  	help
-
-
-
 config CPU_FREQ_DEFAULT_GOV_ALUCARD
 	bool "alucard"
 	select CPU_FREQ_GOV_ALUCARD
@@ -378,11 +371,6 @@ config CPU_FREQ_GOV_YANKACTIVE
 
 
 
-config CPU_FREQ_GOV_SMARTASS2
-  	tristate "'smartassV2' cpufreq governor"
-  	depends on CPU_FREQ
-  	help
-    	'smartassV2' - a "smart" governor
 
 config CPU_FREQ_GOV_DARKNESS
 	tristate "'darkness' cpufreq policy governor"
@@ -395,9 +383,6 @@ config CPU_FREQ_GOV_ALUCARD
 	tristate "'alucard' cpufreq governor"
 	depends on CPU_FREQ
 
-config CPU_FREQ_GOV_LAZY
-	tristate "'lazy' cpufreq governor"
-	depends on CPU_FREQ
 
 config CPU_FREQ_GOV_WHEATLEY
 	tristate "'wheatley' cpufreq governor"
