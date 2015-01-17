@@ -180,6 +180,7 @@ struct cs_dbs_tuners {
 	unsigned int down_threshold;
 	unsigned int freq_step;
 	unsigned int twostep_counter;
+	u64 twostep_time;
 };
 
 /* Common Governor data across policies */
