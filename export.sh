@@ -7,11 +7,11 @@ export ARCH=arm
 echo "Building Velvet Kernel for YU Yureka"
 build=/root/velvet/output/tomato
 export CROSS_COMPILE=/root/velvet/toolchains/linaro-arm-eabi-4.9/bin/arm-eabi-
-fi
 kernel="velvet"
 version="1.0.0"
 rom="cm"
 variant="tomato"
+ramdisk=ramdisk
 config="tomato_defconfig"
 kerneltype="zImage"
 jobcount="-j$(grep -c ^processor /proc/cpuinfo)*2"
@@ -33,8 +33,7 @@ function cleanme {
 }
 
 rm -rf out
-mkdir out
-mkdir out/tmp
+mkdir -p out/tmp
 echo "Checking for build..."
 if [ -f zip/boot.img ]; then
 	read -p "Previous build found, clean working directory..(y/n)? : " cchoice
@@ -104,10 +103,17 @@ else
 	exit 0;
 fi
 
+echo "Making ramdisk..."
+if [ -d $ramdisk ]; then
+	mkbootfs $ramdisk | lz4demo -c stdin out/ramdisk.lz4
+else
+	echo "No ramdisk found..."
+	exit 0;
+fi
 
 echo "Making boot.img..."
 if [ -f out/"$kerneltype" ]; then
-	mkbootimg --kernel out/"$kerneltype" --ramdisk resources/initramfs.img --cmdline "$cmdline" --base $base --pagesize $ps --ramdisk_offset $ramdisk_offset --tags_offset $tags_offset --dt out/dt.img --output zip/boot.img
+	mkbootimg --kernel out/"$kerneltype" --ramdisk out/ramdisk.lz4 --cmdline "$cmdline" --base $base --pagesize $ps --ramdisk_offset $ramdisk_offset --tags_offset $tags_offset --dt out/dt.img --output zip/boot.img
 else
 	echo "No $kerneltype found..."
 	exit 0;
