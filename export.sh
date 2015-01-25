@@ -4,35 +4,30 @@
 # If you are using a non-appended dt.image, you will need to add "--dt path/to/dt.img" and
 # the appropriate lines for dtbTool to compile it, if not prebuilt.
 export ARCH=arm
-if [ "$1" == "local" ]; then
-	echo "Local Build"
-	build=/home/savoca/Documents/Kernel/build_output
-	export CROSS_COMPILE=/home/savoca/Documents/GoogleGCC/arm-eabi-4.8/bin/arm-eabi-
-else
-	echo "Remote Build"
-	build=/home/savoca/downloads/furnace/bacon
-	export CROSS_COMPILE=/home/savoca/storage/toolchains/arm-eabi-4.8/bin/arm-eabi-
+echo "Building Velvet Kernel for YU Yureka"
+build=/root/velvet/output/tomato
+export CROSS_COMPILE=/root/velvet/toolchains/linaro-arm-eabi-4.9/bin/arm-eabi-
 fi
-kernel="furnace"
-version="1.1.0"
-rom="aosp"
-variant="bacon"
-config="furnace_bacon_defconfig"
+kernel="velvet"
+version="1.0.0"
+rom="cm"
+variant="tomato"
+config="tomato_defconfig"
 kerneltype="zImage"
-jobcount="-j$(grep -c ^processor /proc/cpuinfo)"
+jobcount="-j$(grep -c ^processor /proc/cpuinfo)*2"
 ps=2048
-base=0x00000000
-ramdisk_offset=0x02000000
-tags_offset=0x01e00000
-cmdline="console=ttyHSL0,115200,n8 androidboot.hardware=bacon user_debug=31 msm_rtb.filter=0x3F ehci-hcd.park=3"
+base=0x80000000
+ramdisk_offset=0x01000000
+#tags_offset=0x01e00000
+cmdline="console=ttyHSL0,115200,n8 boot_cpus=0,4,5,6,7 androidboot.console=ttyHSL0 androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x3F ehci-hcd.park=3 androidboot.bootdevice=7824900.sdhci sched_enable_hmp=1"
 
 function cleanme {
 	if [ -f arch/arm/boot/"$kerneltype" ]; then
-		echo "  CLEAN   ozip"
+		echo "  CLEAN   zip"
 	fi
-	rm -rf ozip/boot.img
+	rm -rf zip/boot.img
 	rm -rf arch/arm/boot/"$kerneltype"
-	mkdir -p ozip/system/lib/modules
+	mkdir -p zip/system/lib/modules
 	make clean && make mrproper
 	echo "Working directory cleaned..."
 }
@@ -41,7 +36,7 @@ rm -rf out
 mkdir out
 mkdir out/tmp
 echo "Checking for build..."
-if [ -f ozip/boot.img ]; then
+if [ -f zip/boot.img ]; then
 	read -p "Previous build found, clean working directory..(y/n)? : " cchoice
 	case "$cchoice" in
 		y|Y )
@@ -63,17 +58,18 @@ if [ -f ozip/boot.img ]; then
 			echo "Invalid...";;
 	esac
 fi
+
 echo "Extracting files..."
 if [ -f arch/arm/boot/"$kerneltype" ]; then
 	cp arch/arm/boot/"$kerneltype" out
-	rm -rf ozip/system
-	mkdir -p ozip/system/lib/modules
-	find . -name "*.ko" -exec cp {} ozip/system/lib/modules \;
-	if [ -f ozip/system/lib/modules/*.ko ]; then
+	rm -rf zip/system
+	mkdir -p zip/system/lib/modules
+	find . -name "*.ko" -exec cp {} zip/system/lib/modules \;
+	if [ -f zip/system/lib/modules/*.ko ]; then
 		echo "Modules found."
 	else
 		echo "No modules"
-		rm -rf ozip/system
+		rm -rf zip/system
 	fi
 else
 	echo "Nothing has been made..."
@@ -111,7 +107,7 @@ fi
 
 echo "Making boot.img..."
 if [ -f out/"$kerneltype" ]; then
-	mkbootimg --kernel out/"$kerneltype" --ramdisk resources/initramfs.img --cmdline "$cmdline" --base $base --pagesize $ps --ramdisk_offset $ramdisk_offset --tags_offset $tags_offset --dt out/dt.img --output ozip/boot.img
+	mkbootimg --kernel out/"$kerneltype" --ramdisk resources/initramfs.img --cmdline "$cmdline" --base $base --pagesize $ps --ramdisk_offset $ramdisk_offset --tags_offset $tags_offset --dt out/dt.img --output zip/boot.img
 else
 	echo "No $kerneltype found..."
 	exit 0;
@@ -119,11 +115,11 @@ fi
 
 echo "Zipping..."
 if [ -f arch/arm/boot/"$kerneltype" ]; then
-	cd ozip
+	cd zip
 	zip -r ../"$kernel"-$version-"$rom"_"$variant".zip .
 	mv ../"$kernel"-$version-"$rom"_"$variant".zip $build
 	cd ..
-	rm -rf out ozip/system
+	rm -rf out zip/system
 	echo "Done..."
 	echo "Output zip: $build/$kernel-$version-$(echo $rom)_$variant.zip"
 	exit 0;
