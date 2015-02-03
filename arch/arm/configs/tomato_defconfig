@@ -55,6 +55,9 @@ CONFIG_HAVE_KERNEL_LZO=y
 # CONFIG_KERNEL_LZO is not set
 CONFIG_DEFAULT_HOSTNAME="(none)"
 CONFIG_SWAP=y
+CONFIG_FRONTSWAP=y
+CONFIG_ZSWAP=y
+CONFIG_VNSWAP=y
 CONFIG_SYSVIPC=y
 CONFIG_SYSVIPC_SYSCTL=y
 # CONFIG_POSIX_MQUEUE is not set
@@ -536,7 +539,12 @@ CONFIG_ALIGNMENT_TRAP=y
 CONFIG_CC_STACKPROTECTOR=y
 # CONFIG_XEN is not set
 CONFIG_CP_ACCESS=y
+<<<<<<< HEAD:arch/arm/configs/tomato_defconfig
 CONFIG_ARM_FLUSH_CONSOLE_ON_RESTART=y
+=======
+# CONFIG_ARM_FLUSH_CONSOLE_ON_RESTART is not set
+CONFIG_POWERSUSPEND=y
+>>>>>>> 8a1984a... Enable Swap, Frontswap, Zswap, PowerSuspend, KSM, Etc...:arch/arm/configs/lk_defconfig
 
 #
 # Boot options
