@@ -83,3 +83,4 @@ obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI4)		+= synaptics_i2c_rmi4.o
 obj-$(CONFIG_TOUCHSCREEN_GT9XX)		+= gt9xx/
 obj-$(CONFIG_TOUCHSCREEN_YL_GT9XX)	+= gt9xx_yl/
 obj-$(CONFIG_MACH_YULONG)		+= touchscreen_yl.o
+obj-y += touchboost.o
