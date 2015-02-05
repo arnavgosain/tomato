@@ -135,6 +135,11 @@ config CPU_FREQ_DEFAULT_GOV_WHEATLEY
 	---help---
 	  Use the CPUFreq governor 'wheatley' as default.
 
+config CPU_FREQ_DEFAULT_GOV_BIOSHOCK
+	bool "BioShock"
+	select CPU_FREQ_GOV_BIOSHOCK
+	help
+	  Default governor of BioShock kernel
 
 
 endchoice
@@ -229,9 +234,15 @@ config CPU_FREQ_GOV_INTELLIACTIVE
 	  If in doubt, say N.
 	  
 config CPU_FREQ_GOV_WHEATLEY
-	   tristate "'wheatley' cpufreq governor"
-	   depends on CPU_FREQ
-	  
+        tristate "'wheatley' cpufreq governor"
+        depends on CPU_FREQ
+
+config CPU_FREQ_GOV_BIOSHOCK
+	tristate "'bioshock' cpufreq bioshock"
+	depends on CPU_FREQ
+	help
+	  'bioshock' - More aggressive version of conservative
+
 config CPU_BOOST
 	tristate "Event base short term CPU freq boost"
 	depends on CPU_FREQ
