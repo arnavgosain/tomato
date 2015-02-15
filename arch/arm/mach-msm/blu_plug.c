@@ -21,25 +21,22 @@
 #include <linux/workqueue.h>
 #include <linux/sched.h>
 #include <linux/timer.h>
-#include <linux/notifier.h>
-#include <linux/fb.h>
+#include <linux/lcd_notify.h>
 #include <soc/qcom/cpufreq.h>
 #include <linux/cpufreq.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
-#include <linux/input.h>
 
-#define INIT_DELAY		(20 * HZ) /* Initial delay to 20 sec */
+#define INIT_DELAY		(60 * HZ) /* Initial delay to 60 sec, 4 cores while boot */
 #define DELAY			(HZ / 2)
-#define UP_THRESHOLD		(70)
-#define MIN_ONLINE		(1)
+#define UP_THRESHOLD		(80)
+#define MIN_ONLINE		(2)
 #define MAX_ONLINE		(4)
 #define DEF_DOWN_TIMER_CNT	(6)	/* 3 secs */
 #define DEF_UP_TIMER_CNT	(2)	/* 1 sec */
-#define MAX_CORES_SCREENOFF (1)
+#define MAX_CORES_SCREENOFF (2)
 #define MAX_FREQ_SCREENOFF (1190400)
 #define MAX_FREQ_PLUG (2649600)
-#define MAX_CORES_PLUG (4)
 
 static unsigned int up_threshold = UP_THRESHOLD;;
 static unsigned int delay = DELAY;
@@ -52,12 +49,10 @@ static unsigned int up_timer_cnt = DEF_UP_TIMER_CNT;
 static unsigned int max_cores_screenoff = MAX_CORES_SCREENOFF;
 static unsigned int max_freq_screenoff = MAX_FREQ_SCREENOFF;
 static unsigned int max_freq_plug = MAX_FREQ_PLUG;
-static unsigned int max_cores_plug = MAX_CORES_PLUG;
-static unsigned int rcrc;
 
 static struct delayed_work dyn_work;
 static struct workqueue_struct *dyn_workq;
-static struct work_struct suspend, resume, touchy;
+static struct work_struct suspend, resume;
 static struct notifier_block notify;
 
 
@@ -69,6 +64,8 @@ static inline void up_all(void)
 	for_each_possible_cpu(cpu)
 		if (cpu_is_offline(cpu) && num_online_cpus() < max_online)
 			cpu_up(cpu);
+
+	down_timer = 0;
 }
 
 /* Put offline each possible CPU down to min_online threshold */
@@ -96,11 +93,6 @@ static inline void up_one(void)
 out:
 	down_timer = 0;
 	up_timer = 0;
-}
-
-static __ref void touch_up_one(struct work_struct *work)
-{
-	up_one();
 }
 
 /* Iterate through online CPUs and put offline the lowest loaded one */
@@ -182,14 +174,13 @@ static __ref void max_screenoff(bool screenoff)
 	if (screenoff) {
 		max_freq_plug = cpufreq_quick_get_max(0);
 		freq = max_freq_screenoff;
-			
-		max_cores_plug = max_online;
-		max_online = max_cores_screenoff;
+
+		cancel_delayed_work_sync(&dyn_work);
 		
 		for_each_possible_cpu(cpu) {
-			msm_cpufreq_set_freq_limits(cpu, MSM_CPUFREQ_NO_LIMIT, max_freq_screenoff);
+			msm_cpufreq_set_freq_limits(cpu, MSM_CPUFREQ_NO_LIMIT, freq);
 			
-			if (cpu && num_online_cpus() > max_online)
+			if (cpu && num_online_cpus() > max_cores_screenoff)
 				cpu_down(cpu);
 		}
 		cpufreq_update_policy(cpu);
@@ -197,12 +188,10 @@ static __ref void max_screenoff(bool screenoff)
 	else {
 		freq = max_freq_plug;
 		
-		max_online = max_cores_plug;
-		
 		up_all();
 		
 		for_each_possible_cpu(cpu) {
-			msm_cpufreq_set_freq_limits(cpu, MSM_CPUFREQ_NO_LIMIT, max_freq_plug);
+			msm_cpufreq_set_freq_limits(cpu, MSM_CPUFREQ_NO_LIMIT, freq);
 		}
 		cpufreq_update_policy(cpu);
 		
@@ -226,105 +215,24 @@ static __ref void dyn_lcd_resume(struct work_struct *work)
 	max_screenoff(false);
 }
 
-static int fb_notifier_callback(struct notifier_block *self,
-				unsigned long event, void *data)
+static __ref int lcd_notifier_callback(struct notifier_block *this, unsigned long event, void *data)
 {
-	struct fb_event *evdata = data;
-	int *blank;
-
-	if (evdata && evdata->data && event == FB_EVENT_BLANK) {
-		blank = evdata->data;
-		switch (*blank) {
-			case FB_BLANK_UNBLANK:
-				//display on
-				queue_work_on(0, dyn_workq, &resume);
-				break;
-			case FB_BLANK_POWERDOWN:
-			case FB_BLANK_HSYNC_SUSPEND:
-			case FB_BLANK_VSYNC_SUSPEND:
-			case FB_BLANK_NORMAL:
-				//display off
-				queue_work_on(0, dyn_workq, &suspend);
-				break;
-		}
+	switch (event) {
+	case LCD_EVENT_ON_END:
+	case LCD_EVENT_OFF_START:
+		break;
+	case LCD_EVENT_ON_START:
+		queue_work_on(0, dyn_workq, &resume);
+		break;
+	case LCD_EVENT_OFF_END:
+		queue_work_on(0, dyn_workq, &suspend);
+		break;
+	default:
+		break;
 	}
 
-	return 0;
+	return NOTIFY_OK;
 }
-
-static void blu_plug_input_event(struct input_handle *handle,
-		unsigned int type,
-		unsigned int code, int value)
-{
-	if (num_online_cpus() >= 2)
-		return;
-	
-	if (type == EV_SYN && code == SYN_REPORT)
-		queue_work_on(0, dyn_workq, &touchy);
-}
-
-static int blu_plug_input_connect(struct input_handler *handler,
-		struct input_dev *dev, const struct input_device_id *id)
-{
-	struct input_handle *handle;
-	int error;
-
-	handle = kzalloc(sizeof(struct input_handle), GFP_KERNEL);
-	if (!handle)
-		return -ENOMEM;
-
-	handle->dev = dev;
-	handle->handler = handler;
-	handle->name = "blu_plug";
-
-	error = input_register_handle(handle);
-	if (error)
-		goto err2;
-
-	error = input_open_device(handle);
-	if (error)
-		goto err1;
-
-	return 0;
-err1:
-	input_unregister_handle(handle);
-err2:
-	kfree(handle);
-	return error;
-}
-
-static void blu_plug_input_disconnect(struct input_handle *handle)
-{
-	input_close_device(handle);
-	input_unregister_handle(handle);
-	kfree(handle);
-}
-
-static const struct input_device_id blu_plug_ids[] = {
-	{
-		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
-			 INPUT_DEVICE_ID_MATCH_ABSBIT,
-		.evbit = { BIT_MASK(EV_ABS) },
-		.absbit = { [BIT_WORD(ABS_MT_POSITION_X)] =
-			    BIT_MASK(ABS_MT_POSITION_X) |
-			    BIT_MASK(ABS_MT_POSITION_Y) },
-	}, /* multi-touch touchscreen */
-	{
-		.flags = INPUT_DEVICE_ID_MATCH_KEYBIT |
-			 INPUT_DEVICE_ID_MATCH_ABSBIT,
-		.keybit = { [BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH) },
-		.absbit = { [BIT_WORD(ABS_X)] =
-			    BIT_MASK(ABS_X) | BIT_MASK(ABS_Y) },
-	}, /* touchpad */
-};
-
-static struct input_handler blu_plug_input_handler = {
-	.event		= blu_plug_input_event,
-	.connect	= blu_plug_input_connect,
-	.disconnect	= blu_plug_input_disconnect,
-	.name		= "blu_plug",
-	.id_table	= blu_plug_ids,
-};
 
 /******************** Module parameters *********************/
 
@@ -418,7 +326,7 @@ static __ref int set_max_cores_screenoff(const char *val, const struct kernel_pa
 	ret = kstrtouint(val, 10, &i);
 	if (ret)
 		return -EINVAL;
-	if (i < 1 || i < min_online || i > max_online || i > num_possible_cpus())
+	if (i < 1 || i > max_online || i > num_possible_cpus())
 		return -EINVAL;
 	if (i > max_online)
 		max_cores_screenoff = max_online;
@@ -519,11 +427,9 @@ module_param_cb(up_timer_cnt, &up_timer_cnt_ops, &up_timer_cnt, 0644);
 
 static int __init dyn_hp_init(void)
 {
-	notify.notifier_call = fb_notifier_callback;
-	
-	rcrc = input_register_handler(&blu_plug_input_handler);
-	if (rcrc)
-		pr_info("%s: failed to register input handler\n",__func__);
+	notify.notifier_call = lcd_notifier_callback;
+	if (lcd_register_client(&notify) != 0)
+		pr_info("%s: lcd client register error\n", __func__);
 	
 	dyn_workq = alloc_workqueue("dyn_hotplug_workqueue", WQ_HIGHPRI | WQ_FREEZABLE, 0);
 	if (!dyn_workq)
@@ -531,7 +437,6 @@ static int __init dyn_hp_init(void)
 
 	INIT_WORK(&resume, dyn_lcd_resume);
 	INIT_WORK(&suspend, dyn_lcd_suspend);
-	INIT_WORK(&touchy, touch_up_one);
 	INIT_DELAYED_WORK(&dyn_work, load_timer);
 	queue_delayed_work_on(0, dyn_workq, &dyn_work, INIT_DELAY);
 
@@ -542,7 +447,6 @@ static int __init dyn_hp_init(void)
 
 static void __exit dyn_hp_exit(void)
 {
-	input_unregister_handler(&blu_plug_input_handler);
 	cancel_delayed_work_sync(&dyn_work);
 	destroy_workqueue(dyn_workq);
 	
