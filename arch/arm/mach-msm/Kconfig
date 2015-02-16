@@ -1056,10 +1056,6 @@ config MSM_PP2S_FEMTO
 config MAKO_HOTPLUG
 	bool "CPU hotplug driver"
 	default n
-
-config MSM_SLEEPER
-	bool "CPU hotplug driver"
-	default n
 	help
 	  CPU hotplug driver
 endif

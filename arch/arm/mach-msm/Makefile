@@ -84,4 +84,3 @@ obj-$(CONFIG_PERFMAP) += perfmap.o
 
 obj-$(CONFIG_MACH_YULONG) += yulong/
 obj-$(CONFIG_MAKO_HOTPLUG) += mako_hotplug.o
-obj-$(CONFIG_MSM_SLEEPER) += msm-sleeper.o
