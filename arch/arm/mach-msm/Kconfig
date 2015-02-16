@@ -1052,10 +1052,4 @@ config MSM_PP2S_FEMTO
 	  Support for being notified relative to a PP2S pulse
 	  Select Y if you want this notification to manifest.
 	  If unsure, select N.
-
-config MAKO_HOTPLUG
-	bool "CPU hotplug driver"
-	default n
-	help
-	  CPU hotplug driver
 endif
