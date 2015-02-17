@@ -2,7 +2,7 @@
 echo "Welcome to Velvet Kernel Builder!"
 LC_ALL=C date +%Y-%m-%d
 toolchain="/root/velvet/toolchains/arm-cortex_a15-linux-gnueabihf-linaro_4.9.1-2014.04/bin/arm-gnueabi-"
-build=/root/out
+build=/root/velvet/out
 kernel="velvet"
 version=".R1"
 rom="cm"
