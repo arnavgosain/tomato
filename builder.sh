@@ -17,8 +17,8 @@ ramdisk_offset=0x01000000
 pagesize=2048
 cmdline="androidboot.console=ttyHSL0 androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x3F ehci-hcd.park=3 androidboot.bootdevice=7824900.sdhci sched_enable_hmp=1"
 jobcount="-j$(grep -c ^processor /proc/cpuinfo)"
-export KBUILD_USER=arnavgosain
-export KBUILD_HOST=velvet
+export KBUILD_BUILD_USER=arnavgosain
+export KBUILD_BUILD_HOST=velvet
 
 rm -rf out
 mkdir out
@@ -33,9 +33,6 @@ if [ -f zip/boot.img ]; then
 			echo "  CLEAN zip"
 			rm -rf zip/boot.img
 			rm -rf arch/arm/boot/"$kerneltype"
-			rm -rf zip/system
-			mkdir -p zip/system/lib/modules
-
 			make clean && make mrproper
 			echo "Working directory cleaned...";;
 		n|N )
@@ -68,8 +65,6 @@ else
                         echo "  CLEAN zip"
                         rm -rf zip/boot.img
                         rm -rf arch/arm/boot/"$kerneltype"
-			rm -rf zip/system
-                        mkdir -p zip/system/lib/modules
                         make clean && make mrproper
                         echo "Working directory cleaned...";;
 		n|N )
