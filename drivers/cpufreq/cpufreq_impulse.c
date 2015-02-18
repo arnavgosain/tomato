@@ -30,6 +30,7 @@
 #include <linux/kthread.h>
 #include <linux/slab.h>
 #include <asm/cputime.h>
+#include <linux/sched/rt.h>
 
 struct cpufreq_impulse_cpuinfo {
 	struct timer_list cpu_timer;
