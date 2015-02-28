@@ -613,7 +613,7 @@ audio_bind(struct usb_configuration *c, struct usb_function *f)
 	audio_source_ac_interface_desc.bInterfaceNumber = status;
 
 	/* AUDIO_AC_INTERFACE */
-	ac_header_desc.baInterfaceNr[0] = status;
+	audio_source_ac_header_desc.baInterfaceNr[0] = status;
 
 	status = usb_interface_id(c, f);
 	if (status < 0)
@@ -622,7 +622,7 @@ audio_bind(struct usb_configuration *c, struct usb_function *f)
 	as_interface_alt_1_desc.bInterfaceNumber = status;
 
 	/* AUDIO_AS_INTERFACE */
-	ac_header_desc.baInterfaceNr[1] = status;
+	audio_source_ac_header_desc.baInterfaceNr[1] = status;
 
 	status = -ENODEV;
 
