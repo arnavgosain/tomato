@@ -93,7 +93,7 @@ fi
 
 echo "Making ramdisk..."
 if [ -d $ramdisk ]; then
-	boot_tools/mkbootfs $ramdisk | boot_tools/lz4demo -c stdin out/ramdisk.lz4
+	boot_tools/mkbootfs $ramdisk | gzip out/ramdisk.gz
 else
 	echo "No ramdisk found..."
 	exit 0;
@@ -105,7 +105,7 @@ echo "Making dt.img..."
 echo "Making boot.img..."
 if [ -f out/"$kerneltype" ]; then
 #	./boot_tools/mkbootimg --kernel out/"$kerneltype" --ramdisk out/ramdisk.gz --cmdline $cmdline --base $base --pagesize $pagesize --ramdisk_offset $ramdisk_offset --dt out/dt.img -o zip/boot.img
-	./boot_tools/mkbootimg --base 0x80000000 --kernel out/zImage --ramdisk_offset 0x01000000 --cmdline "androidboot.console=ttyHSL0 androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x3F ehci-hcd.park=3 androidboot.bootdevice=7824900.sdhci sched_enable_hmp=1" --ramdisk out/ramdisk.lz4 --dt out/dt.img -o out/boot.img
+	./boot_tools/mkbootimg --base 0x80000000 --kernel out/zImage --ramdisk_offset 0x01000000 --cmdline "androidboot.console=ttyHSL0 androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x3F ehci-hcd.park=3 androidboot.bootdevice=7824900.sdhci sched_enable_hmp=1" --ramdisk out/ramdisk.gz --dt out/dt.img -o out/boot.img
 else
 	echo "No $kerneltype found..."
 	exit 0;
