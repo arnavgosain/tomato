@@ -93,7 +93,7 @@ fi
 
 echo "Making ramdisk..."
 if [ -d $ramdisk ]; then
-	boot_tools/mkbootfs $ramdisk | gzip out/ramdisk.gz
+	boot_tools/mkbootfs $ramdisk | gzip > out/ramdisk.gz
 else
 	echo "No ramdisk found..."
 	exit 0;
