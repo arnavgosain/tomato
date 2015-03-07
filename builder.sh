@@ -1,11 +1,11 @@
 #!/bin/bash
 echo "Welcome to Velvet Kernel Builder!"
 LC_ALL=C date +%Y-%m-%d
-toolchain="/root/velvet/toolchains/arm-cortex_a15-linux-gnueabihf-linaro_4.9.1/bin/arm-gnueabi-"
-#toolchain="/root/velvet/toolchains/sm-arm-eabi-4.9/bin/arm-eabi-"
+toolchain="/root/velvet/toolchains/linaro_toolchains_2014/arm-cortex_a15-linux-gnueabihf-linaro_4.9.3-2014.12/bin/arm-eabi-"
+#toolchain="/root/velvet/toolchains/arm-cortex_a15-linux-gnueabihf-linaro_4.9.1/bin/arm-gnueabi-"
 build=/root/velvet/out/tomato
 kernel="velvet"
-version="R3"
+version="R4"
 rom="cm"
 vendor="yu"
 device="tomato"
