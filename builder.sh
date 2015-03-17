@@ -22,22 +22,22 @@ jobcount="-j$(grep -c ^processor /proc/cpuinfo)"
 export KBUILD_BUILD_USER=arnavgosain
 export KBUILD_BUILD_HOST=velvet
 
-rm -rf out
-mkdir out
-mkdir out/tmp
+#rm -rf out
+#mkdir out
+#mkdir out/tmp
 echo "Checking for build..."
-if [ -f zip/boot.img ]; then
+if [ -f zip/zImage ]; then
 	read -p "Previous build found, clean working directory..(y/n)? : " cchoice
 	case "$cchoice" in
 		y|Y )
 			export ARCH=arm
 			export CROSS_COMPILE=$toolchain
 			echo "  CLEAN zip"
-			rm -rf zip/boot.img
+#			rm -rf zip/boot.img
+			rm -rf zip/zImage
 			rm -rf arch/arm/boot/"$kerneltype"
-			rm -rf zip/system
-			mkdir -p zip/system/lib/modules
-
+#			rm -rf zip/system
+#			mkdir -p zip/system/lib/modules
 			make clean && make mrproper
 			echo "Working directory cleaned...";;
 		n|N )
@@ -59,7 +59,7 @@ if [ -f zip/boot.img ]; then
 fi
 echo "Extracting files..."
 if [ -f arch/arm/boot/"$kerneltype" ]; then
-	cp arch/arm/boot/"$kerneltype" out
+	cp arch/arm/boot/"$kerneltype" zip/tools
 else
 	echo "Nothing has been made..."
 	read -p "Clean working directory..(y/n)? : " achoice
@@ -68,10 +68,9 @@ else
 			export ARCH=arm
                         export CROSS_COMPILE=$toolchain
                         echo "  CLEAN zip"
-                        rm -rf zip/boot.img
+#                        rm -rf zip/boot.img
+			rm zip/zImage
                         rm -rf arch/arm/boot/"$kerneltype"
-			rm -rf zip/system
-                        mkdir -p zip/system/lib/modules
                         make clean && make mrproper
                         echo "Working directory cleaned...";;
 		n|N )
@@ -92,34 +91,35 @@ else
 	esac
 fi
 
-echo "Making ramdisk..."
-if [ -d $ramdisk ]; then
-	boot_tools/mkbootfs $ramdisk | gzip > out/ramdisk.gz
-else
-	echo "No ramdisk found..."
-	exit 0;
-fi
+#echo "Making ramdisk..."
+#if [ -d $ramdisk ]; then
+#	boot_tools/mkboot#fs $ramdisk | gzip > out/ramdisk.gz
+#else
+#	echo "No ramdisk found..."
+#	exit 0;
+#fi
 
-echo "Making dt.img..."
-./boot_tools/dtbToolCM --force-v2 -o out/dt.img -s 2048 -p ./scripts/dtc/ ./arch/arm/boot/dts/
+#echo "Making dt.img..."
+#./boot_tools/dtbToolCM --force-v2 -o out/dt.img -s 2048 -p ./scripts/dtc/ ./arch/arm/boot/dts/
 
-echo "Making boot.img..."
-if [ -f out/"$kerneltype" ]; then
+#echo "Making boot.img..."
+#if [ -f out/"$kerneltype" ]; then
 #	./boot_tools/mkbootimg --kernel out/"$kerneltype" --ramdisk out/ramdisk.gz --cmdline $cmdline --base $base --pagesize $pagesize --ramdisk_offset $ramdisk_offset --dt out/dt.img -o zip/boot.img
-	./boot_tools/mkbootimg --base 0x80000000 --kernel out/zImage --ramdisk_offset 0x01000000 --cmdline "androidboot.console=ttyHSL0 androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x3F ehci-hcd.park=3 androidboot.bootdevice=7824900.sdhci sched_enable_hmp=1" --ramdisk out/ramdisk.gz --dt out/dt.img -o out/boot.img
-else
-	echo "No $kerneltype found..."
-	exit 0;
-fi
+#	./boot_tools/mkbootimg --base 0x80000000 --kernel out/zImage --ramdisk_offset 0x01000000 --cmdline "androidboot.console=ttyHSL0 androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x3F ehci-hcd.park=3 androidboot.bootdevice=7824900.sdhci sched_enable_hmp=1" --ramdisk out/ramdisk.gz --dt out/dt.img -o out/boot.img
+#else
+#	echo "No $kerneltype found..."
+#	exit 0;
+#fi
 
-echo "Copying boot.img to out dir..."
-cp out/boot.img zip
+#echo "Copying boot.img to out dir..."
+#cp out/boot.img zip
 
 echo "Zipping..."
 if [ -f arch/arm/boot/"$kerneltype" ]; then
 	cd zip
 	zip -r ../"$kernel"."$version"-"$rom"."$vendor"."$device"."$date".zip .
 	mv ../"$kernel"."$version"-"$rom"."$vendor"."$device"."$date".zip $build
+	rm zImage
 	cd ..
 	echo "Done..."
 	exit 0;
