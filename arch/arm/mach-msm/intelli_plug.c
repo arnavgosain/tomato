@@ -26,10 +26,6 @@
 #define DEF_SAMPLING_RATE		(50000)
 #define DEF_SAMPLING_MS			(50)
 
-#define DUAL_CORE_PERSISTENCE		50
-#define TRI_CORE_PERSISTENCE		40
-#define QUAD_CORE_PERSISTENCE		30
-
 static DEFINE_MUTEX(intelli_plug_mutex);
 
 struct delayed_work intelli_plug_work;
@@ -120,7 +116,7 @@ static void intelli_plug_work_fn(struct work_struct *work)
 					//pr_info("case 1: %u\n", persist_count);
 					break;
 				case 2:
-					persist_count = DUAL_CORE_PERSISTENCE;
+					persist_count = 27;
 					if (num_online_cpus() == 1)
 						cpu_up(1);
 					else {
@@ -130,7 +126,7 @@ static void intelli_plug_work_fn(struct work_struct *work)
 					//pr_info("case 2: %u\n", persist_count);
 					break;
 				case 3:
-					persist_count = TRI_CORE_PERSISTENCE;
+					persist_count = 21;
 					if (num_online_cpus() == 2)
 						cpu_up(2);
 					else
@@ -138,7 +134,7 @@ static void intelli_plug_work_fn(struct work_struct *work)
 					//pr_info("case 3: %u\n", persist_count);
 					break;
 				case 4:
-					persist_count = QUAD_CORE_PERSISTENCE;
+					persist_count = 15;
 					if (num_online_cpus() == 3)
 						cpu_up(3);
 					//pr_info("case 4: %u\n", persist_count);
@@ -180,7 +176,7 @@ static void intelli_plug_late_resume(struct early_suspend *handler)
 
 	mutex_lock(&intelli_plug_mutex);
 	/* keep cores awake long enough for faster wake up */
-	persist_count = DUAL_CORE_PERSISTENCE;
+	persist_count = 27;
 	suspended = false;
 	mutex_unlock(&intelli_plug_mutex);
 
