@@ -26,7 +26,7 @@ export KBUILD_BUILD_HOST=velvet
 #mkdir out
 #mkdir out/tmp
 echo "Checking for build..."
-if [ -f zip/zImage ]; then
+if [ -d arch/arm/boot/"$kerneltype" ]; then
 	read -p "Previous build found, clean working directory..(y/n)? : " cchoice
 	case "$cchoice" in
 		y|Y )
@@ -34,8 +34,8 @@ if [ -f zip/zImage ]; then
 			export CROSS_COMPILE=$toolchain
 			echo "  CLEAN zip"
 #			rm -rf zip/boot.img
-			rm -rf zip/zImage
-			rm -rf arch/arm/boot/"$kerneltype"
+#			rm -rf zip/zImage
+#			rm -rf arch/arm/boot/"$kerneltype"
 #			rm -rf zip/system
 #			mkdir -p zip/system/lib/modules
 			make clean && make mrproper
@@ -59,7 +59,7 @@ if [ -f zip/zImage ]; then
 fi
 echo "Extracting files..."
 if [ -f arch/arm/boot/"$kerneltype" ]; then
-	cp arch/arm/boot/"$kerneltype" zip/tools
+	mv arch/arm/boot/"$kerneltype" zip/tools
 else
 	echo "Nothing has been made..."
 	read -p "Clean working directory..(y/n)? : " achoice
@@ -69,8 +69,8 @@ else
                         export CROSS_COMPILE=$toolchain
                         echo "  CLEAN zip"
 #                        rm -rf zip/boot.img
-			rm zip/zImage
-                        rm -rf arch/arm/boot/"$kerneltype"
+#			rm zip/zImage
+#                        rm -rf arch/arm/boot/"$kerneltype"
                         make clean && make mrproper
                         echo "Working directory cleaned...";;
 		n|N )
@@ -115,12 +115,13 @@ fi
 #cp out/boot.img zip
 
 echo "Zipping..."
-if [ -f arch/arm/boot/"$kerneltype" ]; then
+if [ -f zip/tools/"$kerneltype" ]; then
 	cd zip
 	zip -r ../"$kernel"."$version"-"$rom"."$vendor"."$device"."$date".zip .
 	mv ../"$kernel"."$version"-"$rom"."$vendor"."$device"."$date".zip $build
-	rm zImage
+	rm tools/"$kerneltype"
 	cd ..
+	rm -rf arch/arm/boot/"$kerneltype"
 	echo "Done..."
 	exit 0;
 else
